@@ -168,3 +168,39 @@ public class ChatServer extends Observable {
 							}
 						}
 					}
+					else if(code.equals("CHATWITH")){
+						String x = "";
+						HashSet<String> usernames= new HashSet<String>();
+						while(scanner.hasNext()){
+							String temp = scanner.next();
+							x += temp + " ";
+							usernames.add(temp);
+						}
+						if(!checkConvos(usernames)){
+							convos.add(usernames);
+							setChanged();
+							notifyObservers("BEGINCHAT " + x);
+						}
+					}
+					else{
+						/*String temp;
+						String names = "";
+						while(scanner.hasNext()){
+							temp = scanner.next();
+							if(temp.equals("|||")) break;
+							else{
+								names += temp;
+							}							
+						}*/
+					System.out.println("server read " + message);
+					setChanged();
+					notifyObservers(message);
+					}
+					scanner.close();
+				}
+			} catch (IOException e) {
+				//e.printStackTrace();
+			}
+		}
+	}
+}
