@@ -5,22 +5,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Observable;
-import java.util.Queue;
 import java.util.Scanner;
 import java.util.Set;
 
 public class ChatServer extends Observable {
 	
 	private static HashMap<String, String> users = new HashMap<String, String>();
-	private static HashMap<String, ClientObserver> observers = new HashMap<String, ClientObserver>();
-	private static HashMap<String, Observable> observables = new HashMap<String, Observable>();
-	private static Queue<ClientObserver> qobservers = new ArrayDeque<ClientObserver>();
 	private static Set<String> online = new HashSet<String>();
+	private static ArrayList<HashSet<String>> convos = new ArrayList<HashSet<String>>();
 	
 	public static void addUser(String username, String password){
 		
@@ -64,7 +60,7 @@ public class ChatServer extends Observable {
 	
 	public static Set<String> updateUsers(Set<String> exist){
 		
-		Set<String> users = getUsers();
+		//Set<String> users = getUsers();
 		Set<String> userz = new HashSet<String>();
 		for(String s: online){
 			if(!exist.contains(s)){
@@ -73,6 +69,21 @@ public class ChatServer extends Observable {
 		}
 		
 		return userz;
+		
+	}
+	
+	public static boolean checkConvos(HashSet<String> list){
+		
+		for(HashSet<String> set: convos){
+			boolean bool = true;
+			if(set.size() != list.size()) bool = false;
+			for(String s: list){
+				if(!set.contains(s)) bool = false;
+			}
+			if(bool) return true;
+		}
+		
+		return false;
 		
 	}
 	
@@ -92,9 +103,13 @@ public class ChatServer extends Observable {
 			ClientObserver writer = new ClientObserver(clientSocket.getOutputStream());
 			Thread t = new Thread(new ClientHandler(clientSocket));
 			t.start();
-			this.addObserver(writer);
+			addObserver(writer);
 			
-			qobservers.add(writer);
+			for(String a : online){
+				setChanged();
+				notifyObservers("fixadd " + a);
+			}
+			
 			
 			System.out.println("got a connection");
 		}
@@ -116,17 +131,40 @@ public class ChatServer extends Observable {
 			String message;
 			try {
 				while ((message = reader.readLine()) != null) {
-											
-						System.out.println("server read " + message);
-						setChanged();
-						//notifyObservers(message);
-						(observables.get(names)).notifyObservers(message);
+					Scanner scanner = new Scanner(message);
+					String code = scanner.next();
+					
+					if(code.equals("ONLINEADD")){
+						if(scanner.hasNext()){
+							String username = scanner.next();
+							if(scanner.hasNext()){
+								String password = scanner.next();
+								if(checkUser(username) && !online.contains(username) && checkPass(username, password)){
+									System.out.println(username + " logged in");
+									online.add(username);
+									setChanged();
+									notifyObservers("true " + username);
+								}
+							}
+						}
 					}
-					scanner.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-}
+					else if(code.equals("ONLINEREMOVE")){
+						if(scanner.hasNext()){
+							String username = scanner.next();
+							System.out.println(username + " logged out");
+							online.remove(username);
+							setChanged();
+							notifyObservers("removed " + username);
+						}
+					}
+					else if(code.equals("USERSADD")){
+						if(scanner.hasNext()){
+							String username = scanner.next();
+							if(scanner.hasNext()){
+								String password = scanner.next();
+								if(!checkUser(username)){
+								users.put(username, password);
+								}
+							}
+						}
+					}
