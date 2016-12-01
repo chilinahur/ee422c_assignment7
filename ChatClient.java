@@ -234,7 +234,6 @@ public class ChatClient {
 		}
 	}
 
-
 	public static void main(String[] args) {
 		try {
 			new ChatClient().run();
@@ -247,7 +246,82 @@ public class ChatClient {
 		public void run() {
 			String message;
 			try {
-
+				while ((message = reader.readLine()) != null) {
+					if(message.equals("true " + username)){
+						frame.dispose();
+						chooseView();
+						//initView();
+					}
+					else if(message.startsWith("true ")){
+						cb.addItem(message.substring(5));
+						model.addElement(message.substring(5));
+					}
+					else if(message.startsWith("removed ")){
+						cb.removeItem(message.substring(8));
+						model.removeElement(message.substring(8));
+					}
+					else if(message.startsWith("fixadd ")){
+						if(!message.equals("fixadd " + username)){
+							if(!getDroplist().contains(message.substring(7))){
+								cb.addItem(message.substring(7));
+								model.addElement(message.substring(7));
+							}
+						}
+					}
+					else if(message.startsWith("BEGINCHAT ")){
+						
+						//Set<String> others = new HashSet<String>();
+						Scanner scanner = new Scanner(message);
+						boolean bool = false;
+						while(scanner.hasNext()){
+							String s = scanner.next();
+							if(s.equals(username)){
+								initView();
+								bool = true;
+							}
+							/*else{
+								others.add(s);
+							}*/
+						}
+						if(bool){
+							cw.add(message.substring(10));
+							zzz = message.substring(10);
+						}
+						scanner.close();
+					}
+					else{
+						Scanner scanner = new Scanner(message);
+						//scanner.next();
+						String temp;
+						Boolean bool = false;
+						
+						while(scanner.hasNext()){
+							temp = scanner.next();
+							if(temp.equals(username)) bool = true;
+							if(temp.equals("|||")) break;						
+						}
+						
+						if(bool){
+						
+							String send = "";
+							
+							while(scanner.hasNext()){
+								send += scanner.next() + " ";
+							}
+							
+							System.out.println("server read " + message);
+							
+							try{
+								incoming.append(send + "\n");
+							} catch(Exception e){
+								
+							}
+							
+							scanner.close();
+							//incoming.append(message + "\n");
+						}
+					}
+				}
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			}
